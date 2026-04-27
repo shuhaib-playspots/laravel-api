@@ -23,4 +23,20 @@ class UserRepository
             'dob'      => $dob,
         ]);
     }
+
+    /**
+     * Update the given user's profile fields.
+     *
+     * Only the keys present in $data are written; omitted fields are left unchanged.
+     *
+     * @param  User                  $user
+     * @param  array<string, mixed>  $data  Subset of: name, mobile, gender, dob.
+     * @return User                         The same model instance after the update.
+     */
+    public function update(User $user, array $data): User
+    {
+        $user->update($data);
+
+        return $user->fresh();
+    }
 }

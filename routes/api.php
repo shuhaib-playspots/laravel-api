@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 |   POST  /api/auth/complete-profile  → new user fills name, returns auth token
 |
 | Protected routes require a Bearer token from Sanctum.
+|   PUT   /api/auth/profile           → partial update of name, mobile, gender, dob
 |
 */
 
@@ -29,6 +30,7 @@ Route::prefix('auth')->middleware(['throttle:auth'])->group(function () {
 // Protected routes
 Route::prefix('auth')->middleware(['auth:sanctum'])->group(function () {
     Route::get('me',                         [AuthController::class, 'me']);
+    Route::put('profile',                    [AuthController::class, 'updateProfile']);
     Route::post('logout',                    [AuthController::class, 'logout']);
     Route::post('logout-all',                [AuthController::class, 'logoutAll']);
     Route::post('refresh',                   [AuthController::class, 'refresh']);

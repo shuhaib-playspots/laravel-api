@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Repositories\TokenRepository;
+use App\Repositories\UserRepository;
 
 class AuthService
 {
     public function __construct(
         private readonly TokenRepository $tokens,
+        private readonly UserRepository  $users,
     ) {}
 
     public function logout(User $user): void
@@ -43,6 +45,30 @@ class AuthService
     public function revokeDevice(User $user, int $tokenId): bool
     {
         return $this->tokens->revokeToken($user, $tokenId);
+    }
+
+    /**
+     * Update the authenticated user's editable profile fields.
+     *
+     * Only fields present in $data are persisted; unset fields are left unchanged.
+     * Returns the updated user's full profile as an array.
+     *
+     * @param  User                  $user
+     * @param  array<string, mixed>  $data  Validated subset of: name, mobile, gender, dob.
+     * @return array<string, mixed>
+     */
+    public function updateProfile(User $user, array $data): array
+    {
+        $user = $this->users->update($user, $data);
+
+        return [
+            'id'     => $user->id,
+            'name'   => $user->name,
+            'email'  => $user->email,
+            'mobile' => $user->mobile,
+            'gender' => $user->gender,
+            'dob'    => $user->dob?->toDateString(),
+        ];
     }
 
     public function refresh(User $user, array $deviceInfo): array

@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\CompleteProfileRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\SendOtpRequest;
+use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Services\AuthService;
 use App\Services\DeviceService;
@@ -338,6 +339,67 @@ class AuthController extends Controller
                     'gender' => $user->gender,
                     'dob'    => $user->dob?->toDateString(),
                 ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update the authenticated user's profile details.
+     *
+     * Accepts a partial payload — only the fields included in the request are
+     * updated. At least one of `name`, `mobile`, `gender`, or `dob` must be
+     * provided. Returns the full, up-to-date profile after the update.
+     *
+     * @param  UpdateProfileRequest $request Validated request containing any subset of
+     *                                       name, mobile, gender, and dob.
+     * @return JsonResponse                  JSON response with success status and the
+     *                                       updated user profile.
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "message": "Profile updated successfully.",
+     *   "user": {
+     *     "id": 1,
+     *     "name": "Jane Doe",
+     *     "email": "jane@example.com",
+     *     "mobile": "+911234567890",
+     *     "gender": "female",
+     *     "dob": "1995-06-15"
+     *   }
+     * }
+     * @response 422 {
+     *   "message": "The name field must only contain letters, spaces, and hyphens.",
+     *   "errors": { "name": ["..."] }
+     * }
+     * @response 500 {
+     *   "success": false,
+     *   "message": "Error description"
+     * }
+     */
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        try {
+            $data = $request->validated();
+
+            if (empty($data)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No updatable fields provided.',
+                ], 422);
+            }
+
+            $user = $this->auth->updateProfile($request->user(), $data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully.',
+                'user'    => $user,
             ]);
         } catch (\Exception $e) {
             Log::error($e);
